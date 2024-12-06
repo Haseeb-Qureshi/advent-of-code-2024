@@ -1,5 +1,7 @@
 # Part 1
 
+require_relative 'helpers.rb'
+
 grid = File.readlines('data04.txt').map(&:chomp).map(&:chars)
 
 SCANS = [
@@ -12,10 +14,6 @@ SCANS = [
   [[1, -1], [2, -2], [3, -3]],
   [[-1, 1], [-2, 2], [-3, 3]],
 ]
-
-def in_grid?(grid, i, j)
-  (0...grid.length).include?(i) && (0...grid[0].length).include?(j)
-end
 
 def scanned_coord_paths(i, j, scans)
   scans.map { |diffs| diffs.map { |di, dj| [i + di, j + dj] } }
