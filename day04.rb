@@ -1,6 +1,6 @@
 # Part 1
 
-require_relative 'helpers.rb'
+require_relative 'helpers'
 
 grid = File.readlines('data04.txt').map(&:chomp).map(&:chars)
 
