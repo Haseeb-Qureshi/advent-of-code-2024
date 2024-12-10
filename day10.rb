@@ -22,8 +22,7 @@ end
 # Output how many 9s are reachable from a 0
 sum = grid.each_with_index.sum do |row, i|
   row.each_with_index.sum do |n, j|
-    next 0 unless n == 9
-    mark_zeroes_reachable_from!(i, j, grid, reachable_9s)
+    n == 9 ? mark_zeroes_reachable_from!(i, j, grid, reachable_9s) : 0
   end
 end
 
