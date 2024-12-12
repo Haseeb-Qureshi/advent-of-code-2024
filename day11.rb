@@ -46,12 +46,9 @@ class Node
 end
 
 def dynamically_step(input, depth)
-  # memoize each subtree
-  nodes = input.map do |el|
-    CACHE[el] ||= Node.new(el)
-  end
+  nodes = input.map { |el| CACHE[el] ||= Node.new(el) }
   # Each subtree memoizes the number of children at each step (1, 2, 3, 4, 5) so you don't need to recompute it
-  puts nodes.sum { |n| n.num_children_at(depth) }
+  nodes.sum { |n| n.num_children_at(depth) }
 end
 
 puts dynamically_step(input, 75)
