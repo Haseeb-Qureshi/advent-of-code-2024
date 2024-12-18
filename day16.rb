@@ -15,21 +15,6 @@ ORIENTATIONS = [
 ]
 
 GRID = File.readlines('data16.txt').map(&:chomp).map(&:chars)
-# GRID = '###############
-# #.......#....E#
-# #.#.###.#.###.#
-# #.....#.#...#.#
-# #.###.#####.#.#
-# #.#.#.......#.#
-# #.#.#####.###.#
-# #...........#.#
-# ###.#.#####.#.#
-# #...#.....#.#.#
-# #.#.#.###.#.#.#
-# #.....#...#.#.#
-# #.###.#.#.#.#.#
-# #S..#.....#...#
-# ###############'.lines.map(&:chomp).map(&:chars)
 
 i, j = nil, nil
 GRID.each_index do |i2|
@@ -51,66 +36,55 @@ def display_path(path)
   new_grid = GRID.map(&:dup)
   path.each { |(i, j)| new_grid[i][j] = 'O' }
   new_grid.map(&:join)
-  # system 'clear'
 end
 
 def bfs_from(i, j)
   # Do BFS with a priority queue
   queue = PQueue.new { |a, b| a.last < b.last }
-  queue << [i, j, ORIENTATIONS[1], Set.new([[i, j]]), 0]
-  seen = Hash.new { |h, k| h[k] = 0 }
-  first_ending_cost = nil
-  return_key = nil
-  shortest_path_here = Hash.new { |h, k| h[k] = [Float::INFINITY, Set.new]}
+  queue << [i, j, ORIENTATIONS[1], Set.new([[i, j, ORIENTATIONS[1]]]), 0]
+  seen = Set.new
+  paths_here = Hash.new { |h, k| h[k] = [Float::INFINITY, Set.new]}
 
   until queue.empty?
     i, j, orientation, path, cost = queue.pop
 
-    best_cost, predecessors = shortest_path_here[[i, j, orientation]]
-    if cost < best_cost
-      shortest_path_here[[i, j, orientation]] = [cost, path]
-    elsif cost == best_cost
-      shortest_path_here[[i, j, orientation]] = [cost, predecessors + path]
-    end
+    lowest_cost, path_here = paths_here[[i, j, orientation]]
+    paths_here[[i, j, orientation]] = [cost, path_here + path] if cost <= lowest_cost
 
-    # require 'pry'; binding.pry if i == 7 && j == 5
-    # if i == 7 && j == 6
-    #   puts [i, j, orientation, path, cost].join(' ')
-    #   puts display_path(path)
-    # end
-
-    next if seen[[i, j, orientation]] > 10
-    seen[[i, j, orientation]] += 1
+    next if seen.include?([i, j, orientation])
+    seen << [i, j, orientation]
     next if !in_grid?(GRID, i, j)
     next if GRID[i][j] == WALL
-    if GRID[i][j] == 'E'
-      if first_ending_cost.nil? # first time reaching the end!
-        first_ending_cost = cost
-        return_key = [i, j, orientation]
-      else # we've already gotten to the end
-        # require 'pry'; binding.pry
-        # p shortest_path_here if cost > first_ending_cost
-        return shortest_path_here[return_key] if cost > first_ending_cost
-      end
-    end
+    return cost, path, paths_here if GRID[i][j] == 'E'
 
     # add to queue: advance
     i2 = i + orientation[0]
     j2 = j + orientation[1]
 
-    queue << [i2, j2, orientation, path + [[i2, j2, orientation]], cost + 1] unless path.include?([i2, j2, orientation])
+    queue << [i2, j2, orientation, path + [[i2, j2, orientation]], cost + 1]
     # add to queue: turning left and turning right
     rotations(orientation).each do |new_orientation|
-      queue << [i, j, new_orientation, path, cost + 1000]
+      queue << [i, j, new_orientation, path + [[i, j, new_orientation]], cost + 1000]
     end
   end
 end
 
-cost, pathed_nodes = bfs_from(i, j)
+cost, path, paths_here = bfs_from(i, j)
 puts cost
 
 # Part 2
 
-puts pathed_nodes.size
-puts display_path(pathed_nodes).join.count("O")
-puts display_path(pathed_nodes)
+def all_nodes_from(i, j, o, paths_here, cache = {})
+  path = paths_here[[i, j, o]].last
+  cache[[i, j, o]] = path if path.length <= 2
+  return cache[[i, j, o]] if cache[[i, j, o]]
+
+  path.each do |i2, j2, o2|
+    next if i2 == i && j2 == j && o2 == o
+    path += all_nodes_from(i2, j2, o2, paths_here, cache)
+  end
+  cache[[i, j, o]] ||= path
+end
+
+i, j, o = paths_here.keys.find { |i, j, o| i == 1 && j == GRID[0].length - 2 }
+puts all_nodes_from(i, j, o, paths_here).uniq { |(i, j)| [i, j] }.count
